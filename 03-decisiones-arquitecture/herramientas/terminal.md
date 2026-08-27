@@ -1,4 +1,4 @@
-# Terminal (CLI)
+# Terminal (CLI) 
 
 **Estado en el Tech Radar:** 🟢 Adoptar  
 **Categoría:** Herramientas  
