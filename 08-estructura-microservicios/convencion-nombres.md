@@ -1,49 +1,75 @@
-# 🏷️ Convención de Nombres en el Ecosistema
+# Convención de Nombres de Repositorio
 
-## 1. Objetivo
+## Patrón
 
-Fijar los estándares de nomenclatura para repositorios, código, artefactos, endpoints y recursos de infraestructura en **Fixia** para asegurar consistencia e interoperabilidad.
+```
+<prefijo-organizacion>-<tipo>-<nombre-del-servicio>
+```
 
----
+| Componente | Descripción | Ejemplo |
+|---|---|---|
+| `prefijo-organizacion` | Prefijo fijo de la organización/producto | `fixia` |
+| `tipo` | Tipo de componente (ver tabla de tipos) | `msv`, `apigateway`, `web` |
+| `nombre-del-servicio` | Nombre corto y descriptivo en minúsculas, sin abreviaturas ambiguas | `descubridor`, `procesamiento` |
 
-## 2. Repositorios y Servicios
+## Tipos de repositorio permitidos
 
-- **Repositorios de Microservicios:** `kebab-case` prefijado con `fixia-`.
-  - *Ejemplos:* `fixia-auth-service`, `fixia-order-service`, `fixia-web-frontend`.
-- **Imágenes de Docker:** `fixia/<nombre-microservicio>:<tag>`
-  - *Ejemplo:* `fixia/fixia-order-service:1.2.0`
+| Tipo | Significado | Ejemplo de nombre completo |
+|---|---|---|
+| `apigateway` | Puerta de entrada única a los microservicios (único por organización/dominio, no lleva nombre adicional) | `fixia-apigateway` |
+| `msv` | Microservicio de negocio | `fixia-msv-descubridor`, `fixia-msv-procesamiento` |
+| `web` | Frontend / aplicación web | `fixia-web-portal`, `fixia-web-admin` |
+| `lib` | Librería o paquete compartido entre microservicios | `fixia-lib-common`, `fixia-lib-auth` |
+| `job` | Procesos batch, tareas programadas o workers asíncronos | `fixia-job-reportes` |
+| `infra` | Código de infraestructura (Terraform, Ansible, manifiestos K3s) | `fixia-infra-terraform` |
 
----
+## ⚠️ Pendiente de definir: prefijo para componentes serverless
 
-## 3. Código Fuente por Lenguaje
+El microservicio de **Mensajería** está marcado como *serverless* (ver
+[01-contexto-proyecto/mapa-dominios-negocio.md](../01-contexto-proyecto/mapa-dominios-negocio.md)),
+y ninguno de los tipos de esta tabla fue pensado originalmente para ese
+caso. Dos opciones a resolver cuando llegue la documentación adicional:
 
-### Java (Spring Boot)
-- **Paquetes:** `lowercase` sin guiones (`com.fixia.order.domain`)
-- **Clases e Interfaces:** `PascalCase` (`OrderService`, `UserRepository`)
-- **Métodos y Variables:** `camelCase` (`findOrderById`, `totalAmount`)
-- **Constantes:** `UPPER_SNAKE_CASE` (`MAX_RETRY_ATTEMPTS`)
+1. Usar `msv` igual (`fixia-msv-mensajeria`) y documentar el runtime
+   serverless como un detalle de infraestructura de ese repositorio
+   puntual, no como un tipo de repositorio distinto.
+2. Introducir un tipo nuevo, ej. `fn` (function/serverless), si se
+   prevén más componentes serverless a futuro (`fixia-fn-mensajeria`).
 
-### Python (FastAPI / Django)
-- **Módulos y Archivos:** `snake_case` (`order_repository.py`, `auth_utils.py`)
-- **Clases:** `PascalCase` (`OrderResponseDTO`, `UserDomain`)
-- **Funciones, Métodos y Variables:** `snake_case` (`calculate_tax`, `user_id`)
-- **Constantes:** `UPPER_SNAKE_CASE` (`DEFAULT_PAGE_SIZE`)
+Hasta resolver esto, el catálogo (ver
+[catalogo-microservicios-fixia.md](./catalogo-microservicios-fixia.md))
+usa la opción 1 como nombre **propuesto**, no confirmado.
 
----
+## Reglas de nomenclatura
 
-## 4. API REST y Endpoints
+- Todo en minúsculas, palabras separadas por guion medio (`-`), nunca
+  guion bajo ni camelCase.
+- El `nombre-del-servicio` debe reflejar el dominio de negocio, no la
+  tecnología (`fixia-msv-descubridor`, no `fixia-msv-python-busqueda`).
+  Esto es especialmente relevante ahora que el proyecto es políglota (ver
+  [03-decisiones-arquitectura/lenguajes-frameworks/](../03-decisiones-arquitectura/lenguajes-frameworks/)):
+  el lenguaje interno de un microservicio nunca debe filtrarse al nombre
+  del repositorio.
+- Nombres en singular o plural deben ser consistentes entre todos los
+  microservicios (recomendado: sustantivo que describe la función, no
+  necesariamente plural — ej. `descubridor`, `orquestador`, no
+  `descubridores`).
+- Prohibido usar nombres genéricos como `fixia-msv-api` o
+  `fixia-msv-service` que no identifiquen el dominio.
 
-- **Rutas (URIs):** `kebab-case`, en plural para recursos.
-  - ✅ `/api/v1/services-orders`
-  - ❌ `/api/v1/serviceOrder` o `/api/v1/get_orders`
-- **Parámetros Query:** `camelCase` (`/api/v1/orders?userId=123&status=PENDING`)
-- **Encabezados HTTP personalizados:** `X-Fixia-<Nombre>` (`X-Fixia-Trace-Id`)
+## Nombres compuestos
 
----
+Cuando el nombre de negocio tiene más de una palabra (ej. "Gestión de
+Servicios/Pagos" o "Calificaciones y Métricas"), se abrevia a la idea
+central en kebab-case, evitando nombres largos:
 
-## 5. Base de Datos (PostgreSQL)
+| Nombre de negocio | Repositorio propuesto |
+|---|---|
+| Gestión de Servicios/Pagos | `fixia-msv-servicios-pagos` |
+| Calificaciones y Métricas | `fixia-msv-calificaciones` |
+| Orquestador (Saga) | `fixia-msv-orquestador` |
+| Operación (Panel Admin) | `fixia-msv-operacion` |
 
-- **Tablas:** `snake_case` en plural (`users`, `service_orders`, `payment_transactions`).
-- **Columnas:** `snake_case` (`created_at`, `user_id`, `is_active`).
-- **Claves Primarias:** `id` (preferiblemente `UUID` o `BIGINT`).
-- **Claves Foráneas:** `<tabla_singular>_id` (`user_id`, `order_id`).
+Ver el catálogo completo, incluyendo los nombres marcados como
+pendientes de confirmar, en
+[catalogo-microservicios-fixia.md](./catalogo-microservicios-fixia.md).
